@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -40,10 +41,38 @@ const generateProjectPrompt = ai.definePrompt({
   name: 'generateProjectPrompt',
   input: {schema: GenerateAndroidProjectInputSchema},
   output: {schema: GenerateAndroidProjectOutputSchema},
-  prompt: `You are an expert Android Studio code generator. When a user enters a prompt, generate a full Android Studio project using Java or Kotlin with all necessary files: Java/Kotlin source files, XML layouts, Manifest, Gradle files. Ensure each file is syntactically correct, logically structured, and complete.  Do not leave any missing references, variables, or unresolved components.
+  prompt: `You are an expert Android Studio code generator. Your task is to generate a complete Android Studio project based on the user's command.
+The output MUST be a JSON object matching the specified schema. Specifically, you must provide a 'projectFiles' array.
+Each element in the 'projectFiles' array MUST be an object containing:
+1.  A 'path' field: A non-empty string representing the full relative path of the file (e.g., 'app/src/main/java/com/example/MainActivity.java'). This field is mandatory.
+2.  A 'content' field: A non-empty string containing the complete, raw text content of the file. This field is mandatory. Ensure the content is not truncated and includes all necessary imports, package declarations, and is syntactically correct.
 
-  User Command: {{{command}}}
+Generate all necessary files: Java/Kotlin source files, XML layouts, AndroidManifest.xml, and Gradle build files (build.gradle, settings.gradle, etc.).
+Ensure each file is logically structured and complete. Do not leave any missing references, variables, or unresolved components.
+Pay close attention to providing BOTH 'path' and 'content' for EVERY file entry. Do not omit 'path' for any file. Do not truncate any file content.
+
+User Command: {{{command}}}
   `,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+    ],
+  },
 });
 
 const generateAndroidProjectFlow = ai.defineFlow(
