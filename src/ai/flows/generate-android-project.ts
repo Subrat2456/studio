@@ -20,8 +20,15 @@ const GenerateAndroidProjectInputSchema = z.object({
 });
 export type GenerateAndroidProjectInput = z.infer<typeof GenerateAndroidProjectInputSchema>;
 
+const FileEntrySchema = z.object({
+  path: z.string().describe("The full path of the file, including directories and the file name with extension (e.g., 'app/src/main/java/com/example/MainActivity.java'). This path should be relative to the project root."),
+  content: z.string().describe("The complete, raw text content of the file. Ensure all necessary imports, package declarations, and syntax are correct and complete."),
+});
+
 const GenerateAndroidProjectOutputSchema = z.object({
-  projectFiles: z.record(z.string(), z.string()).describe('A map of file paths to file contents for the generated Android Studio project.'),
+  projectFiles: z.array(FileEntrySchema)
+    .min(1, "The project must contain at least one file.")
+    .describe('A list of all files in the generated Android Studio project. Each item in the list must be an object containing the file path and its corresponding content.'),
 });
 export type GenerateAndroidProjectOutput = z.infer<typeof GenerateAndroidProjectOutputSchema>;
 

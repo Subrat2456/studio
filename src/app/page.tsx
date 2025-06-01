@@ -32,17 +32,21 @@ export default function DroidForgePage() {
 
     try {
       const result: GenerateAndroidProjectOutput = await generateAndroidProject(input);
-      if (result.projectFiles && Object.keys(result.projectFiles).length > 0) {
-        setGeneratedFiles(result.projectFiles);
+      if (result.projectFiles && result.projectFiles.length > 0) {
+        const filesMap: Record<string, string> = result.projectFiles.reduce((acc, fileEntry) => {
+          acc[fileEntry.path] = fileEntry.content;
+          return acc;
+        }, {} as Record<string, string>);
+        setGeneratedFiles(filesMap);
         toast({
           title: "Project Generated!",
           description: "Your Android project files are ready.",
         });
       } else {
-        setError('The AI returned an empty project. Please try a different prompt.');
+        setError('The AI returned an empty project or no files. Please try a different prompt.');
          toast({
           title: "Generation Issue",
-          description: "The AI returned an empty project. Please try a different prompt.",
+          description: "The AI returned an empty project or no files. Please try a different prompt.",
           variant: "destructive",
         });
       }
