@@ -19,6 +19,8 @@ type StatusBarData = {
 
 export default function ProTextAIPage() {
   const [text, setText] = React.useState('');
+  // File System Access API is not available in sandboxed environments.
+  // We fall back to using input elements and download links, so fileHandle will remain null.
   const [fileHandle, setFileHandle] = React.useState<FileSystemFileHandle | null>(null);
   const [fileName, setFileName] = React.useState('Untitled');
   const [isSaved, setIsSaved] = React.useState(true);
@@ -37,6 +39,7 @@ export default function ProTextAIPage() {
   const [isCheckingGrammar, setIsCheckingGrammar] = React.useState(false);
 
   const editorRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const {toast} = useToast();
 
   React.useEffect(() => {
@@ -61,10 +64,15 @@ export default function ProTextAIPage() {
     setStatusBarData({line, column, wordCount, charCount});
   }, []);
 
+  // Update status bar on text change
   React.useEffect(() => {
     updateStatusBar();
-    setIsSaved(false);
   }, [text, updateStatusBar]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setText(e.target.value);
+      setIsSaved(false);
+  };
 
   const handleNew = () => {
     setText('');
@@ -73,53 +81,56 @@ export default function ProTextAIPage() {
     setIsSaved(true);
   };
 
-  const handleOpen = async () => {
-    try {
-      const [handle] = await window.showOpenFilePicker({
-        types: [{description: 'Text Files', accept: {'text/plain': ['.txt', '.js', '.html', '.css', '.md']}}],
-      });
-      const file = await handle.getFile();
-      const content = await file.text();
-      setText(content);
-      setFileHandle(handle);
-      setFileName(handle.name);
-      setIsSaved(true);
-    } catch (err) {
-      console.error('Failed to open file:', err);
-    }
+  const handleOpen = () => {
+    fileInputRef.current?.click();
   };
 
-  const handleSave = async () => {
-    if (fileHandle) {
-      try {
-        const writable = await fileHandle.createWritable();
-        await writable.write(text);
-        await writable.close();
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        setText(content);
+        setFileName(file.name);
+        setFileHandle(null); // We don't get a handle with this method
         setIsSaved(true);
-        toast({title: 'File saved successfully'});
-      } catch (err) {
-        console.error('Failed to save file:', err);
-        toast({title: 'Error saving file', description: 'Could not save changes.', variant: 'destructive'});
+      };
+      reader.onerror = () => {
+        console.error('Failed to read file');
+        toast({ title: 'Error opening file', description: 'Could not read the selected file.', variant: 'destructive' });
       }
-    } else {
-      await handleSaveAs();
+      reader.readAsText(file);
+    }
+    // Reset the input value to allow opening the same file again
+    if(e.target) {
+      e.target.value = '';
     }
   };
 
-  const handleSaveAs = async () => {
+
+  const handleSave = () => {
+    // Since we can't get a file handle, all saves are "Save As" (download)
+    handleSaveAs();
+  };
+
+  const handleSaveAs = () => {
     try {
-      const handle = await window.showSaveFilePicker({
-        types: [{description: 'Text Files', accept: {'text/plain': ['.txt']}}],
-      });
-      const writable = await handle.createWritable();
-      await writable.write(text);
-      await writable.close();
-      setFileHandle(handle);
-      setFileName(handle.name);
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      // Use a default filename if the current one is just "Untitled"
+      link.download = fileName === 'Untitled' || !fileName.includes('.') ? `${fileName}.txt` : fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       setIsSaved(true);
-      toast({title: 'File saved successfully'});
+      toast({title: 'File downloaded successfully'});
     } catch (err) {
       console.error('Failed to save file as:', err);
+      toast({title: 'Error saving file', variant: 'destructive'});
     }
   };
   
@@ -145,6 +156,7 @@ export default function ProTextAIPage() {
         const { selectionStart, selectionEnd } = editorRef.current;
         const newText = text.substring(0, selectionStart) + date + text.substring(selectionEnd);
         setText(newText);
+        setIsSaved(false); // Also set unsaved on this action
         setTimeout(() => {
             if(editorRef.current) {
                 editorRef.current.selectionStart = editorRef.current.selectionEnd = selectionStart + date.length;
@@ -178,6 +190,7 @@ export default function ProTextAIPage() {
   const applyGrammarCorrection = () => {
     if(grammarCheckResult) {
         setText(grammarCheckResult.correctedText);
+        setIsSaved(false); // Applying correction is an edit
     }
     setIsGrammarCheckDialogOpen(false);
     setGrammarCheckResult(null);
@@ -211,10 +224,17 @@ export default function ProTextAIPage() {
         showStatusBar={showStatusBar}
       />
       <main className="flex-grow flex relative overflow-hidden">
+        <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelected}
+            style={{ display: 'none' }}
+            accept=".txt,.js,.html,.css,.md,text/plain"
+        />
         <Editor
           ref={editorRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleTextChange}
           onSelect={updateStatusBar}
           wordWrap={wordWrap}
         />
