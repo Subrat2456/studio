@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTheme } from './theme-provider';
 
 export type FontSettings = {
   family: string;
   size: number;
   weight: 'normal' | 'bold';
   style: 'normal' | 'italic';
+  color: string;
 };
 
 type FontDialogProps = {
@@ -30,6 +32,9 @@ type FontDialogProps = {
 
 export function FontDialog({ open, onOpenChange, onApply, initialSettings }: FontDialogProps) {
   const [settings, setSettings] = React.useState<FontSettings>(initialSettings);
+  const { theme } = useTheme();
+  const [defaultColor, setDefaultColor] = React.useState('#000000');
+
 
   React.useEffect(() => {
     if (open) {
@@ -37,10 +42,19 @@ export function FontDialog({ open, onOpenChange, onApply, initialSettings }: Fon
     }
   }, [open, initialSettings]);
 
+  React.useEffect(() => {
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setDefaultColor(isDark ? '#FFFFFF' : '#000000');
+  }, [theme]);
+
   const handleApply = () => {
     onApply(settings);
     onOpenChange(false);
   };
+
+  const handleResetColor = () => {
+    setSettings(s => ({ ...s, color: '' }));
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,6 +110,27 @@ export function FontDialog({ open, onOpenChange, onApply, initialSettings }: Fon
               onCheckedChange={(checked) => setSettings(s => ({ ...s, style: checked ? 'italic' : 'normal' }))}
             />
             <Label htmlFor="font-style" className="font-normal">Italic</Label>
+          </div>
+          <div className="space-y-2 col-span-2">
+            <Label htmlFor="font-color-picker">Text Color</Label>
+            <div className="flex items-center gap-2">
+                <Input
+                    id="font-color-picker"
+                    type="color"
+                    value={settings.color || defaultColor}
+                    onChange={(e) => setSettings(s => ({ ...s, color: e.target.value }))}
+                    className="p-1 h-10 w-16"
+                />
+                 <Input
+                    id="font-color-text"
+                    type="text"
+                    value={settings.color}
+                    onChange={(e) => setSettings(s => ({ ...s, color: e.target.value }))}
+                    placeholder="Default"
+                    className="w-full"
+                />
+                <Button variant="outline" onClick={handleResetColor}>Reset</Button>
+            </div>
           </div>
         </div>
         <DialogFooter>

@@ -64,6 +64,7 @@ export default function ProTextAIPage() {
     size: 14,
     weight: 'normal',
     style: 'normal',
+    color: '',
   });
   const [syntaxLanguage, setSyntaxLanguage] = React.useState('none');
 
@@ -359,8 +360,14 @@ export default function ProTextAIPage() {
     setFontSettings(prev => ({ ...prev, size: Math.max(prev.size - 2, 4) }));
   }, []);
 
-  const handleRestoreZoom = React.useCallback(() => {
-    setFontSettings(prev => ({ ...prev, size: 14 }));
+  const handleRestoreDefaultFont = React.useCallback(() => {
+    setFontSettings({
+      family: 'monospace',
+      size: 14,
+      weight: 'normal',
+      style: 'normal',
+      color: '',
+    });
   }, []);
 
   // Keyboard shortcuts for zoom
@@ -379,7 +386,7 @@ export default function ProTextAIPage() {
             handled = true;
             break;
           case '0':
-            handleRestoreZoom();
+            handleRestoreDefaultFont();
             handled = true;
             break;
         }
@@ -389,11 +396,11 @@ export default function ProTextAIPage() {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleZoomIn, handleZoomOut, handleRestoreZoom]);
+  }, [handleZoomIn, handleZoomOut, handleRestoreDefaultFont]);
 
   const menuActions = {
     'file:new': handleNew,
@@ -416,7 +423,7 @@ export default function ProTextAIPage() {
     'format:font': () => setIsFontDialogOpen(true),
     'view:zoomIn': handleZoomIn,
     'view:zoomOut': handleZoomOut,
-    'view:restoreZoom': handleRestoreZoom,
+    'view:restoreDefaultFont': handleRestoreDefaultFont,
     'view:statusBar': () => setShowStatusBar(prev => !prev),
     'help:viewHelp': () => setIsHelpDialogOpen(true),
     'help:about': () => setIsAboutDialogOpen(true),

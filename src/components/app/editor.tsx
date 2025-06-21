@@ -50,7 +50,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       }
     };
     
-    const editorStyle = {
+    const editorStyle: React.CSSProperties = {
         fontFamily: fontSettings.family,
         fontSize: `${fontSettings.size}px`,
         fontWeight: fontSettings.weight,
@@ -59,8 +59,28 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     };
 
     const syntaxTheme = React.useMemo(() => {
-        return theme === 'dark' ? vscDarkPlus : vs;
-    }, [theme]);
+        const baseTheme = theme === 'dark' ? vscDarkPlus : vs;
+        if (fontSettings.color) {
+            const newTheme = JSON.parse(JSON.stringify(baseTheme));
+            const plainTextStyle = { color: fontSettings.color };
+            newTheme['code[class*="language-"]'] = { ...newTheme['code[class*="language-"]'], ...plainTextStyle };
+            newTheme['pre[class*="language-"]'] = { ...newTheme['pre[class*="language-"]'], ...plainTextStyle };
+            return newTheme;
+        }
+        return baseTheme;
+    }, [theme, fontSettings.color]);
+
+    const textareaStyle: React.CSSProperties = {
+        ...editorStyle,
+        caretColor: currentCaretColor,
+    };
+
+    if (syntaxLanguage !== 'none') {
+        textareaStyle.color = 'transparent';
+    } else if (fontSettings.color) {
+        textareaStyle.color = fontSettings.color;
+    }
+
 
     return (
       <div className="flex flex-grow w-full h-full bg-card">
@@ -82,11 +102,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 onChange={onChange}
                 onSelect={onSelect}
                 onScroll={handleScroll}
-                style={{
-                    ...editorStyle,
-                    color: 'transparent',
-                    caretColor: currentCaretColor,
-                }}
+                style={textareaStyle}
                 className={cn(
                     'absolute inset-0 p-4 bg-transparent outline-none resize-none w-full h-full z-10',
                     wordWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre',

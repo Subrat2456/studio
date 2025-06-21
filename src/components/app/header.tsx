@@ -128,8 +128,8 @@ export function AppHeader({
                   Zoom Out <MenubarShortcut>{CtrlCmd}+-</MenubarShortcut>
                 </MenubarItem>
                 <MenubarSeparator />
-                <MenubarItem onClick={() => handleAction('view:restoreZoom')}>
-                  Restore Default Zoom <MenubarShortcut>{CtrlCmd}+0</MenubarShortcut>
+                <MenubarItem onClick={() => handleAction('view:restoreDefaultFont')}>
+                  Restore Default Font <MenubarShortcut>{CtrlCmd}+0</MenubarShortcut>
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>
