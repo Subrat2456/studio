@@ -19,9 +19,12 @@ type AppHeaderProps = {
   isCheckingGrammar: boolean;
   wordWrap: boolean;
   showStatusBar: boolean;
+  isSummarizing: boolean;
+  isParaphrasing: boolean;
+  isExpanding: boolean;
 };
 
-export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatusBar }: AppHeaderProps) {
+export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatusBar, isSummarizing, isParaphrasing, isExpanding }: AppHeaderProps) {
   const isMac = typeof window !== 'undefined' ? navigator.platform.toUpperCase().indexOf('MAC') >= 0 : false;
   const CtrlCmd = isMac ? 'Cmd' : 'Ctrl';
 
@@ -30,6 +33,8 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
       menuActions[action]();
     }
   };
+
+  const anyAiActionInProgress = isCheckingGrammar || isSummarizing || isParaphrasing || isExpanding;
 
   return (
     <header className="flex h-12 items-center px-4 border-b shrink-0">
@@ -48,8 +53,7 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
             <MenubarItem onClick={() => handleAction('file:save')}>Save <MenubarShortcut>{CtrlCmd}+S</MenubarShortcut></MenubarItem>
             <MenubarItem onClick={() => handleAction('file:saveAs')}>Save As...</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem disabled>Page Setup...</MenubarItem>
-            <MenubarItem disabled>Print...<MenubarShortcut>{CtrlCmd}+P</MenubarShortcut></MenubarItem>
+            <MenubarItem onClick={() => handleAction('file:print')}>Print...<MenubarShortcut>{CtrlCmd}+P</MenubarShortcut></MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={() => handleAction('file:exit')}>Exit<MenubarShortcut>Alt+F4</MenubarShortcut></MenubarItem>
           </MenubarContent>
@@ -65,10 +69,9 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
             <MenubarItem onClick={() => handleAction('edit:paste')}>Paste<MenubarShortcut>{CtrlCmd}+V</MenubarShortcut></MenubarItem>
             <MenubarItem onClick={() => handleAction('edit:delete')}>Delete<MenubarShortcut>Del</MenubarShortcut></MenubarItem>
             <MenubarSeparator />
-            <MenubarItem disabled>Find...<MenubarShortcut>{CtrlCmd}+F</MenubarShortcut></MenubarItem>
-            <MenubarItem disabled>Find Next<MenubarShortcut>F3</MenubarShortcut></MenubarItem>
-            <MenubarItem disabled>Replace...<MenubarShortcut>{CtrlCmd}+H</MenubarShortcut></MenubarItem>
-            <MenubarItem disabled>Go To...<MenubarShortcut>{CtrlCmd}+G</MenubarShortcut></MenubarItem>
+            <MenubarItem onClick={() => handleAction('edit:find')}>Find...<MenubarShortcut>{CtrlCmd}+F</MenubarShortcut></MenubarItem>
+            <MenubarItem onClick={() => handleAction('edit:findNext')}>Find Next<MenubarShortcut>F3</MenubarShortcut></MenubarItem>
+            <MenubarItem onClick={() => handleAction('edit:replace')}>Replace...<MenubarShortcut>{CtrlCmd}+H</MenubarShortcut></MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={() => handleAction('edit:selectAll')}>Select All<MenubarShortcut>{CtrlCmd}+A</MenubarShortcut></MenubarItem>
             <MenubarItem onClick={() => handleAction('edit:timeDate')}>Time/Date<MenubarShortcut>F5</MenubarShortcut></MenubarItem>
@@ -79,17 +82,12 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
           <MenubarTrigger>Format</MenubarTrigger>
           <MenubarContent>
             <MenubarCheckboxItem checked={wordWrap} onClick={() => handleAction('format:wordWrap')}>Word Wrap</MenubarCheckboxItem>
-            <MenubarItem disabled>Font...</MenubarItem>
-            <MenubarItem disabled>Text Color...</MenubarItem>
-            <MenubarItem disabled>Background...</MenubarItem>
-            <MenubarItem disabled>Syntax Highlighting</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
 
         <MenubarMenu>
           <MenubarTrigger>View</MenubarTrigger>
           <MenubarContent>
-             <MenubarItem disabled>Zoom</MenubarItem>
              <MenubarCheckboxItem checked={showStatusBar} onClick={() => handleAction('view:statusBar')}>Status Bar</MenubarCheckboxItem>
           </MenubarContent>
         </MenubarMenu>
@@ -97,41 +95,43 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
         <MenubarMenu>
           <MenubarTrigger>AI</MenubarTrigger>
           <MenubarContent>
-             <MenubarItem disabled>Summarize</MenubarItem>
-             <MenubarItem disabled>Paraphrase</MenubarItem>
-             <MenubarItem disabled>Expand</MenubarItem>
+             <MenubarItem onClick={() => handleAction('ai:summarize')} disabled={anyAiActionInProgress}>
+                {isSummarizing ? (
+                    <><Loader className="mr-2 h-4 w-4 animate-spin" /> Summarizing...</>
+                ) : (
+                    "Summarize"
+                )}
+             </MenubarItem>
+             <MenubarItem onClick={() => handleAction('ai:paraphrase')} disabled={anyAiActionInProgress}>
+                {isParaphrasing ? (
+                    <><Loader className="mr-2 h-4 w-4 animate-spin" /> Paraphrasing...</>
+                ) : (
+                    "Paraphrase"
+                )}
+             </MenubarItem>
+             <MenubarItem onClick={() => handleAction('ai:expand')} disabled={anyAiActionInProgress}>
+                {isExpanding ? (
+                    <><Loader className="mr-2 h-4 w-4 animate-spin" /> Expanding...</>
+                ) : (
+                    "Expand"
+                )}
+             </MenubarItem>
              <MenubarSeparator />
-             <MenubarItem onClick={() => handleAction('ai:grammarCheck')} disabled={isCheckingGrammar}>
+             <MenubarItem onClick={() => handleAction('ai:grammarCheck')} disabled={anyAiActionInProgress}>
                 {isCheckingGrammar ? (
                     <><Loader className="mr-2 h-4 w-4 animate-spin" /> Checking...</>
                 ) : (
                     "Grammar & Spell Check"
                 )}
              </MenubarItem>
-             <MenubarSeparator />
-             <MenubarItem disabled>Generate Code...</MenubarItem>
-             <MenubarItem disabled>Auto-complete</MenubarItem>
-             <MenubarItem disabled>Refactor</MenubarItem>
-             <MenubarItem disabled>Debug Suggestions</MenubarItem>
-             <MenubarSeparator />
-             <MenubarItem disabled>Generate Image...</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
 
         <MenubarMenu>
-            <MenubarTrigger>Run</MenubarTrigger>
-            <MenubarContent>
-                <MenubarItem disabled>Execute Python</MenubarItem>
-                <MenubarItem disabled>Execute JavaScript</MenubarItem>
-                <MenubarItem disabled>Execute Bash</MenubarItem>
-            </MenubarContent>
-        </MenubarMenu>
-
-
-        <MenubarMenu>
           <MenubarTrigger>Help</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem disabled>View Help<MenubarShortcut>F1</MenubarShortcut></MenubarItem>
+            <MenubarItem onClick={() => handleAction('help:viewHelp')}>View Help</MenubarItem>
+            <MenubarSeparator />
             <MenubarItem onClick={() => handleAction('help:about')}>About ProText AI</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
