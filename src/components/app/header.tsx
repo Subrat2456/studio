@@ -118,7 +118,23 @@ export function AppHeader({
         <MenubarMenu>
           <MenubarTrigger>View</MenubarTrigger>
           <MenubarContent>
-             <MenubarCheckboxItem checked={showStatusBar} onClick={() => handleAction('view:statusBar')}>Status Bar</MenubarCheckboxItem>
+            <MenubarSub>
+              <MenubarSubTrigger>Zoom</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem onClick={() => handleAction('view:zoomIn')}>
+                  Zoom In <MenubarShortcut>{CtrlCmd}+=</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem onClick={() => handleAction('view:zoomOut')}>
+                  Zoom Out <MenubarShortcut>{CtrlCmd}+-</MenubarShortcut>
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem onClick={() => handleAction('view:restoreZoom')}>
+                  Restore Default Zoom <MenubarShortcut>{CtrlCmd}+0</MenubarShortcut>
+                </MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
+            <MenubarSeparator />
+            <MenubarCheckboxItem checked={showStatusBar} onClick={() => handleAction('view:statusBar')}>Status Bar</MenubarCheckboxItem>
           </MenubarContent>
         </MenubarMenu>
 

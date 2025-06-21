@@ -348,7 +348,52 @@ export default function ProTextAIPage() {
     }
     setIsGrammarCheckDialogOpen(false);
     setGrammarCheckResult(null);
-  }
+  };
+  
+  // View Menu Handlers
+  const handleZoomIn = React.useCallback(() => {
+    setFontSettings(prev => ({ ...prev, size: Math.min(prev.size + 2, 72) }));
+  }, []);
+
+  const handleZoomOut = React.useCallback(() => {
+    setFontSettings(prev => ({ ...prev, size: Math.max(prev.size - 2, 4) }));
+  }, []);
+
+  const handleRestoreZoom = React.useCallback(() => {
+    setFontSettings(prev => ({ ...prev, size: 14 }));
+  }, []);
+
+  // Keyboard shortcuts for zoom
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        let handled = false;
+        switch (e.key) {
+          case '=':
+          case '+':
+            handleZoomIn();
+            handled = true;
+            break;
+          case '-':
+            handleZoomOut();
+            handled = true;
+            break;
+          case '0':
+            handleRestoreZoom();
+            handled = true;
+            break;
+        }
+        if (handled) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleZoomIn, handleZoomOut, handleRestoreZoom]);
 
   const menuActions = {
     'file:new': handleNew,
@@ -369,6 +414,9 @@ export default function ProTextAIPage() {
     'edit:timeDate': handleInsertTimeDate,
     'format:wordWrap': () => setWordWrap(prev => !prev),
     'format:font': () => setIsFontDialogOpen(true),
+    'view:zoomIn': handleZoomIn,
+    'view:zoomOut': handleZoomOut,
+    'view:restoreZoom': handleRestoreZoom,
     'view:statusBar': () => setShowStatusBar(prev => !prev),
     'help:viewHelp': () => setIsHelpDialogOpen(true),
     'help:about': () => setIsAboutDialogOpen(true),
