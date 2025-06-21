@@ -9,12 +9,16 @@ import {GrammarCheckDialog} from '@/components/app/grammar-check-dialog';
 import {FindReplaceDialog, type FindReplaceOptions} from '@/components/app/find-replace-dialog';
 import {HelpDialog} from '@/components/app/help-dialog';
 import {FontDialog, type FontSettings} from '@/components/app/font-dialog';
+import {GenerateCodeDialog} from '@/components/app/generate-code-dialog';
+import {GenerateImageDialog} from '@/components/app/generate-image-dialog';
 
 import {grammarCheck} from '@/ai/flows/grammar-check';
 import type {GrammarCheckOutput} from '@/ai/flows/grammar-check';
 import {summarizeText} from '@/ai/flows/summarize-flow';
 import {paraphraseText} from '@/ai/flows/paraphrase-flow';
 import {expandText} from '@/ai/flows/expand-flow';
+import {generateCode} from '@/ai/flows/generate-code-flow';
+import {generateImage} from '@/ai/flows/generate-image-flow';
 
 import {useToast} from '@/hooks/use-toast';
 
@@ -47,6 +51,8 @@ export default function ProTextAIPage() {
   const [isFindReplaceDialogOpen, setIsFindReplaceDialogOpen] = React.useState(false);
   const [isHelpDialogOpen, setIsHelpDialogOpen] = React.useState(false);
   const [isFontDialogOpen, setIsFontDialogOpen] = React.useState(false);
+  const [isGenerateCodeDialogOpen, setIsGenerateCodeDialogOpen] = React.useState(false);
+  const [isGenerateImageDialogOpen, setIsGenerateImageDialogOpen] = React.useState(false);
 
   // AI states
   const [grammarCheckResult, setGrammarCheckResult] = React.useState<GrammarCheckOutput | null>(null);
@@ -54,6 +60,10 @@ export default function ProTextAIPage() {
   const [isSummarizing, setIsSummarizing] = React.useState(false);
   const [isParaphrasing, setIsParaphrasing] = React.useState(false);
   const [isExpanding, setIsExpanding] = React.useState(false);
+  const [isGeneratingCode, setIsGeneratingCode] = React.useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = React.useState(false);
+  const [generatedImageDataUri, setGeneratedImageDataUri] = React.useState<string | null>(null);
+
 
   // Find/Replace state
   const [lastSearch, setLastSearch] = React.useState<FindReplaceOptions & { from: number } | null>(null);
@@ -350,6 +360,62 @@ export default function ProTextAIPage() {
     setIsGrammarCheckDialogOpen(false);
     setGrammarCheckResult(null);
   };
+
+  const handleGenerateCode = async (prompt: string, language: string) => {
+    setIsGeneratingCode(true);
+    try {
+      const result = await generateCode({ prompt, language });
+      if (editorRef.current) {
+        const { selectionStart, selectionEnd } = editorRef.current;
+        const newText = text.substring(0, selectionStart) + result.code + text.substring(selectionEnd);
+        setText(newText);
+        setIsSaved(false);
+        // Move cursor to end of inserted text
+        setTimeout(() => {
+            if(editorRef.current) {
+                editorRef.current.selectionStart = editorRef.current.selectionEnd = selectionStart + result.code.length;
+            }
+        }, 0);
+      }
+      setIsGenerateCodeDialogOpen(false);
+      toast({ title: 'Code Generated', description: 'The code has been inserted into your document.' });
+    } catch (error) {
+      console.error('Code generation failed:', error);
+      toast({ title: 'AI Error', description: 'Failed to generate code.', variant: 'destructive' });
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const handleGenerateImage = async (prompt: string) => {
+    setIsGeneratingImage(true);
+    setGeneratedImageDataUri(null);
+    try {
+      const result = await generateImage({ prompt });
+      setGeneratedImageDataUri(result.imageDataUri);
+    } catch (error) {
+      console.error('Image generation failed:', error);
+      toast({ title: 'AI Error', description: 'Failed to generate image.', variant: 'destructive' });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleInsertImage = (prompt: string, imageDataUri: string) => {
+    const markdown = `![${prompt}](${imageDataUri})`;
+    if (editorRef.current) {
+      const { selectionStart, selectionEnd } = editorRef.current;
+      const newText = text.substring(0, selectionStart) + markdown + text.substring(selectionEnd);
+      setText(newText);
+      setIsSaved(false);
+      setTimeout(() => {
+        if(editorRef.current) {
+            editorRef.current.selectionStart = editorRef.current.selectionEnd = selectionStart + markdown.length;
+        }
+      }, 0);
+    }
+    toast({ title: 'Image Inserted', description: 'Image markdown has been added to your document.' });
+  };
   
   // View Menu Handlers
   const handleZoomIn = React.useCallback(() => {
@@ -431,6 +497,8 @@ export default function ProTextAIPage() {
     'ai:summarize': handleSummarize,
     'ai:paraphrase': handleParaphrase,
     'ai:expand': handleExpand,
+    'ai:generateCode': () => setIsGenerateCodeDialogOpen(true),
+    'ai:generateImage': () => setIsGenerateImageDialogOpen(true),
   };
 
   return (
@@ -441,6 +509,8 @@ export default function ProTextAIPage() {
         isSummarizing={isSummarizing}
         isParaphrasing={isParaphrasing}
         isExpanding={isExpanding}
+        isGeneratingCode={isGeneratingCode}
+        isGeneratingImage={isGeneratingImage}
         wordWrap={wordWrap}
         showStatusBar={showStatusBar}
         syntaxLanguage={syntaxLanguage}
@@ -489,6 +559,21 @@ export default function ProTextAIPage() {
             onApply={applyGrammarCorrection}
         />
       )}
+      <GenerateCodeDialog
+        open={isGenerateCodeDialogOpen}
+        onOpenChange={setIsGenerateCodeDialogOpen}
+        onGenerate={handleGenerateCode}
+        isGenerating={isGeneratingCode}
+      />
+      <GenerateImageDialog
+        open={isGenerateImageDialogOpen}
+        onOpenChange={setIsGenerateImageDialogOpen}
+        onGenerate={handleGenerateImage}
+        onInsert={handleInsertImage}
+        isGenerating={isGeneratingImage}
+        generatedImageDataUri={generatedImageDataUri}
+        clearGeneratedImage={() => setGeneratedImageDataUri(null)}
+      />
     </div>
   );
 }

@@ -17,7 +17,7 @@ import {
   MenubarRadioItem,
 } from '@/components/ui/menubar';
 import { ThemeToggle } from '@/components/app/theme-toggle';
-import { Loader, Sparkles } from 'lucide-react';
+import { Loader, Sparkles, Code, Image as ImageIcon } from 'lucide-react';
 
 type AppHeaderProps = {
   menuActions: { [key: string]: () => void };
@@ -27,6 +27,8 @@ type AppHeaderProps = {
   isSummarizing: boolean;
   isParaphrasing: boolean;
   isExpanding: boolean;
+  isGeneratingCode: boolean;
+  isGeneratingImage: boolean;
   syntaxLanguage: string;
   onSyntaxChange: (language: string) => void;
 };
@@ -39,6 +41,8 @@ export function AppHeader({
   isSummarizing, 
   isParaphrasing, 
   isExpanding,
+  isGeneratingCode,
+  isGeneratingImage,
   syntaxLanguage,
   onSyntaxChange,
 }: AppHeaderProps) {
@@ -51,7 +55,7 @@ export function AppHeader({
     }
   };
 
-  const anyAiActionInProgress = isCheckingGrammar || isSummarizing || isParaphrasing || isExpanding;
+  const anyAiActionInProgress = isCheckingGrammar || isSummarizing || isParaphrasing || isExpanding || isGeneratingCode || isGeneratingImage;
 
   return (
     <header className="flex h-12 items-center px-4 border-b shrink-0">
@@ -170,6 +174,21 @@ export function AppHeader({
                     "Grammar & Spell Check"
                 )}
              </MenubarItem>
+             <MenubarSeparator />
+            <MenubarItem onClick={() => handleAction('ai:generateCode')} disabled={anyAiActionInProgress}>
+              {isGeneratingCode ? (
+                <><Loader className="mr-2 h-4 w-4 animate-spin" /> Generating Code...</>
+              ) : (
+                <><Code className="mr-2 h-4 w-4" /> Generate Code...</>
+              )}
+            </MenubarItem>
+            <MenubarItem onClick={() => handleAction('ai:generateImage')} disabled={anyAiActionInProgress}>
+              {isGeneratingImage ? (
+                <><Loader className="mr-2 h-4 w-4 animate-spin" /> Generating Image...</>
+              ) : (
+                <><ImageIcon className="mr-2 h-4 w-4" /> Generate Image...</>
+              )}
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
 
