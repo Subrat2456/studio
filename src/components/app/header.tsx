@@ -11,6 +11,7 @@ import {
   MenubarCheckboxItem,
   MenubarSub,
   MenubarSubContent,
+  MenubarTrigger,
   MenubarSubTrigger,
   MenubarRadioGroup,
   MenubarRadioItem,

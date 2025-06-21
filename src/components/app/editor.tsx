@@ -23,11 +23,21 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const highlighterRef = React.useRef<HTMLDivElement>(null);
     const [lineCount, setLineCount] = React.useState(1);
     const { theme } = useTheme();
+    const [currentCaretColor, setCurrentCaretColor] = React.useState('black');
 
     React.useEffect(() => {
       const count = value.split('\n').length;
       setLineCount(count > 0 ? count : 1);
     }, [value]);
+    
+    React.useEffect(() => {
+      if (theme === 'system') {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setCurrentCaretColor(isDark ? 'white' : 'black');
+      } else {
+        setCurrentCaretColor(theme === 'dark' ? 'white' : 'black');
+      }
+    }, [theme]);
 
     const handleScroll = (event: React.UIEvent<HTMLTextAreaElement>) => {
       const { scrollTop, scrollLeft } = event.currentTarget;
@@ -50,13 +60,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const syntaxTheme = React.useMemo(() => {
         return theme === 'dark' ? vscDarkPlus : vs;
-    }, [theme]);
-    
-    const currentCaretColor = React.useMemo(() => {
-        if (theme === 'system') {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'white' : 'black';
-        }
-        return theme === 'dark' ? 'white' : 'black';
     }, [theme]);
 
     return (
