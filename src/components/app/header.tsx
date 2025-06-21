@@ -76,6 +76,7 @@ export function AppHeader({
             <MenubarItem onClick={() => handleAction('file:save')}>Save <MenubarShortcut>{CtrlCmd}+S</MenubarShortcut></MenubarItem>
             <MenubarItem onClick={() => handleAction('file:saveAs')}>Save As...</MenubarItem>
             <MenubarSeparator />
+            <MenubarItem onClick={() => handleAction('file:pageSetup')}>Page Setup...</MenubarItem>
             <MenubarItem onClick={() => handleAction('file:print')}>Print...<MenubarShortcut>{CtrlCmd}+P</MenubarShortcut></MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={() => handleAction('file:exit')}>Exit<MenubarShortcut>Alt+F4</MenubarShortcut></MenubarItem>

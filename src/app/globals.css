@@ -70,3 +70,29 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@page {
+  margin: 1in;
+}
+
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header, footer, [data-panel-group-resize-handle] {
+    display: none !important;
+  }
+  main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-panel-group] > [data-panel] {
+    flex-basis: auto !important;
+    overflow: visible !important;
+  }
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+  }
+}

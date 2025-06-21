@@ -173,6 +173,13 @@ export default function ProTextAIPage() {
       toast({title: 'Error saving file', variant: 'destructive'});
     }
   };
+  
+  const handlePageSetup = () => {
+    toast({
+      title: 'Page Setup',
+      description: 'Page settings like margins and orientation can be adjusted in your browser\'s print dialog (File > Print).',
+    });
+  };
 
   const handlePrint = () => window.print();
   
@@ -530,6 +537,7 @@ export default function ProTextAIPage() {
     'file:open': handleOpen,
     'file:save': handleSave,
     'file:saveAs': handleSaveAs,
+    'file:pageSetup': handlePageSetup,
     'file:print': handlePrint,
     'file:exit': handleExit,
     'edit:undo': handleUndo,
