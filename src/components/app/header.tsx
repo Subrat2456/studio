@@ -8,8 +8,12 @@ import {
   MenubarMenu,
   MenubarSeparator,
   MenubarShortcut,
-  MenubarTrigger,
-  MenubarCheckboxItem
+  MenubarCheckboxItem,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarRadioGroup,
+  MenubarRadioItem,
 } from '@/components/ui/menubar';
 import { ThemeToggle } from '@/components/app/theme-toggle';
 import { Loader, Sparkles } from 'lucide-react';
@@ -22,9 +26,21 @@ type AppHeaderProps = {
   isSummarizing: boolean;
   isParaphrasing: boolean;
   isExpanding: boolean;
+  syntaxLanguage: string;
+  onSyntaxChange: (language: string) => void;
 };
 
-export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatusBar, isSummarizing, isParaphrasing, isExpanding }: AppHeaderProps) {
+export function AppHeader({ 
+  menuActions, 
+  isCheckingGrammar, 
+  wordWrap, 
+  showStatusBar, 
+  isSummarizing, 
+  isParaphrasing, 
+  isExpanding,
+  syntaxLanguage,
+  onSyntaxChange,
+}: AppHeaderProps) {
   const isMac = typeof window !== 'undefined' ? navigator.platform.toUpperCase().indexOf('MAC') >= 0 : false;
   const CtrlCmd = isMac ? 'Cmd' : 'Ctrl';
 
@@ -82,6 +98,19 @@ export function AppHeader({ menuActions, isCheckingGrammar, wordWrap, showStatus
           <MenubarTrigger>Format</MenubarTrigger>
           <MenubarContent>
             <MenubarCheckboxItem checked={wordWrap} onClick={() => handleAction('format:wordWrap')}>Word Wrap</MenubarCheckboxItem>
+            <MenubarItem onClick={() => handleAction('format:font')}>Font...</MenubarItem>
+            <MenubarSub>
+              <MenubarSubTrigger>Syntax Highlighting</MenubarSubTrigger>
+              <MenubarSubContent>
+                 <MenubarRadioGroup value={syntaxLanguage} onValueChange={onSyntaxChange}>
+                    <MenubarRadioItem value="none">Plain Text</MenubarRadioItem>
+                    <MenubarRadioItem value="javascript">JavaScript</MenubarRadioItem>
+                    <MenubarRadioItem value="html">HTML</MenubarRadioItem>
+                    <MenubarRadioItem value="css">CSS</MenubarRadioItem>
+                    <MenubarRadioItem value="python">Python</MenubarRadioItem>
+                 </MenubarRadioGroup>
+              </MenubarSubContent>
+            </MenubarSub>
           </MenubarContent>
         </MenubarMenu>
 

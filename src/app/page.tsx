@@ -8,6 +8,7 @@ import {AboutDialog} from '@/components/app/about-dialog';
 import {GrammarCheckDialog} from '@/components/app/grammar-check-dialog';
 import {FindReplaceDialog, type FindReplaceOptions} from '@/components/app/find-replace-dialog';
 import {HelpDialog} from '@/components/app/help-dialog';
+import {FontDialog, type FontSettings} from '@/components/app/font-dialog';
 
 import {grammarCheck} from '@/ai/flows/grammar-check';
 import type {GrammarCheckOutput} from '@/ai/flows/grammar-check';
@@ -45,6 +46,7 @@ export default function ProTextAIPage() {
   const [isGrammarCheckDialogOpen, setIsGrammarCheckDialogOpen] = React.useState(false);
   const [isFindReplaceDialogOpen, setIsFindReplaceDialogOpen] = React.useState(false);
   const [isHelpDialogOpen, setIsHelpDialogOpen] = React.useState(false);
+  const [isFontDialogOpen, setIsFontDialogOpen] = React.useState(false);
 
   // AI states
   const [grammarCheckResult, setGrammarCheckResult] = React.useState<GrammarCheckOutput | null>(null);
@@ -55,6 +57,15 @@ export default function ProTextAIPage() {
 
   // Find/Replace state
   const [lastSearch, setLastSearch] = React.useState<FindReplaceOptions & { from: number } | null>(null);
+  
+  // Format state
+  const [fontSettings, setFontSettings] = React.useState<FontSettings>({
+    family: 'monospace',
+    size: 14,
+    weight: 'normal',
+    style: 'normal',
+  });
+  const [syntaxLanguage, setSyntaxLanguage] = React.useState('none');
 
   const editorRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -357,6 +368,7 @@ export default function ProTextAIPage() {
     'edit:selectAll': handleSelectAll,
     'edit:timeDate': handleInsertTimeDate,
     'format:wordWrap': () => setWordWrap(prev => !prev),
+    'format:font': () => setIsFontDialogOpen(true),
     'view:statusBar': () => setShowStatusBar(prev => !prev),
     'help:viewHelp': () => setIsHelpDialogOpen(true),
     'help:about': () => setIsAboutDialogOpen(true),
@@ -376,6 +388,8 @@ export default function ProTextAIPage() {
         isExpanding={isExpanding}
         wordWrap={wordWrap}
         showStatusBar={showStatusBar}
+        syntaxLanguage={syntaxLanguage}
+        onSyntaxChange={setSyntaxLanguage}
       />
       <main className="flex-grow flex relative overflow-hidden">
         <input
@@ -391,11 +405,19 @@ export default function ProTextAIPage() {
           onChange={handleTextChange}
           onSelect={updateStatusBar}
           wordWrap={wordWrap}
+          fontSettings={fontSettings}
+          syntaxLanguage={syntaxLanguage}
         />
       </main>
       {showStatusBar && <StatusBar {...statusBarData} />}
       <AboutDialog open={isAboutDialogOpen} onOpenChange={setIsAboutDialogOpen} />
       <HelpDialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen} />
+      <FontDialog 
+        open={isFontDialogOpen}
+        onOpenChange={setIsFontDialogOpen}
+        initialSettings={fontSettings}
+        onApply={setFontSettings}
+      />
       <FindReplaceDialog
         open={isFindReplaceDialogOpen}
         onOpenChange={setIsFindReplaceDialogOpen}
