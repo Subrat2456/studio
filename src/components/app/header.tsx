@@ -17,7 +17,7 @@ import {
   MenubarRadioItem,
 } from '@/components/ui/menubar';
 import { ThemeToggle } from '@/components/app/theme-toggle';
-import { Loader, Sparkles, Code, Image as ImageIcon } from 'lucide-react';
+import { Loader, Sparkles, Code, Image as ImageIcon, Play, FileCode, Presentation } from 'lucide-react';
 
 type AppHeaderProps = {
   menuActions: { [key: string]: () => void };
@@ -29,6 +29,7 @@ type AppHeaderProps = {
   isExpanding: boolean;
   isGeneratingCode: boolean;
   isGeneratingImage: boolean;
+  isRunningCode: boolean;
   syntaxLanguage: string;
   onSyntaxChange: (language: string) => void;
 };
@@ -43,6 +44,7 @@ export function AppHeader({
   isExpanding,
   isGeneratingCode,
   isGeneratingImage,
+  isRunningCode,
   syntaxLanguage,
   onSyntaxChange,
 }: AppHeaderProps) {
@@ -55,7 +57,7 @@ export function AppHeader({
     }
   };
 
-  const anyAiActionInProgress = isCheckingGrammar || isSummarizing || isParaphrasing || isExpanding || isGeneratingCode || isGeneratingImage;
+  const anyAiActionInProgress = isCheckingGrammar || isSummarizing || isParaphrasing || isExpanding || isGeneratingCode || isGeneratingImage || isRunningCode;
 
   return (
     <header className="flex h-12 items-center px-4 border-b shrink-0">
@@ -113,6 +115,7 @@ export function AppHeader({
                     <MenubarRadioItem value="html">HTML</MenubarRadioItem>
                     <MenubarRadioItem value="css">CSS</MenubarRadioItem>
                     <MenubarRadioItem value="python">Python</MenubarRadioItem>
+                    <MenubarRadioItem value="bash">Bash</MenubarRadioItem>
                  </MenubarRadioGroup>
               </MenubarSubContent>
             </MenubarSub>
@@ -140,6 +143,27 @@ export function AppHeader({
             <MenubarSeparator />
             <MenubarCheckboxItem checked={showStatusBar} onClick={() => handleAction('view:statusBar')}>Status Bar</MenubarCheckboxItem>
           </MenubarContent>
+        </MenubarMenu>
+
+        <MenubarMenu>
+            <MenubarTrigger>Run</MenubarTrigger>
+            <MenubarContent>
+                <MenubarItem onClick={() => handleAction('run:runCode')} disabled={anyAiActionInProgress}>
+                    {isRunningCode ? (
+                        <><Loader className="mr-2 h-4 w-4 animate-spin" /> Running...</>
+                    ) : (
+                        <><Play className="mr-2 h-4 w-4" /> Run Code</>
+                    )}
+                    <MenubarShortcut>{CtrlCmd}+R</MenubarShortcut>
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem onClick={() => handleAction('run:previewHtml')}>
+                    <FileCode className="mr-2 h-4 w-4" /> Preview HTML
+                </MenubarItem>
+                <MenubarItem onClick={() => handleAction('run:previewMarkdown')}>
+                    <Presentation className="mr-2 h-4 w-4" /> Preview Markdown
+                </MenubarItem>
+            </MenubarContent>
         </MenubarMenu>
 
         <MenubarMenu>

@@ -11,6 +11,8 @@ import {HelpDialog} from '@/components/app/help-dialog';
 import {FontDialog, type FontSettings} from '@/components/app/font-dialog';
 import {GenerateCodeDialog} from '@/components/app/generate-code-dialog';
 import {GenerateImageDialog} from '@/components/app/generate-image-dialog';
+import { OutputPanel, type OutputMode } from '@/components/app/output-panel';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
 import {grammarCheck} from '@/ai/flows/grammar-check';
 import type {GrammarCheckOutput} from '@/ai/flows/grammar-check';
@@ -19,6 +21,7 @@ import {paraphraseText} from '@/ai/flows/paraphrase-flow';
 import {expandText} from '@/ai/flows/expand-flow';
 import {generateCode} from '@/ai/flows/generate-code-flow';
 import {generateImage} from '@/ai/flows/generate-image-flow';
+import {executeCode} from '@/ai/flows/execute-code-flow';
 
 import {useToast} from '@/hooks/use-toast';
 
@@ -63,6 +66,7 @@ export default function ProTextAIPage() {
   const [isGeneratingCode, setIsGeneratingCode] = React.useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = React.useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = React.useState<string | null>(null);
+  const [isRunningCode, setIsRunningCode] = React.useState(false);
 
 
   // Find/Replace state
@@ -77,6 +81,11 @@ export default function ProTextAIPage() {
     color: '',
   });
   const [syntaxLanguage, setSyntaxLanguage] = React.useState('none');
+
+  // Output Panel state
+  const [isOutputPanelVisible, setIsOutputPanelVisible] = React.useState(false);
+  const [outputMode, setOutputMode] = React.useState<OutputMode>('output');
+  const [outputContent, setOutputContent] = React.useState('');
 
   const editorRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -436,6 +445,50 @@ export default function ProTextAIPage() {
     });
   }, []);
 
+  // Run Menu Handlers
+  const handleRunCode = async () => {
+    if (!text.trim()) {
+      toast({ title: 'Nothing to run', description: 'Editor is empty.' });
+      return;
+    }
+    if (syntaxLanguage === 'none' || !syntaxLanguage) {
+      toast({
+        title: 'Cannot Run Code',
+        description: 'Please select a language from the Format > Syntax Highlighting menu first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsRunningCode(true);
+    setOutputMode('output');
+    if (!isOutputPanelVisible) setIsOutputPanelVisible(true);
+    setOutputContent(`Simulating ${syntaxLanguage} code execution...`);
+
+    try {
+      const result = await executeCode({ code: text, language: syntaxLanguage });
+      setOutputContent(result.output || '(No output produced)');
+    } catch (error) {
+      console.error('Code execution simulation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      setOutputContent(`Error during simulation: ${errorMessage}`);
+      toast({
+        title: 'Execution Simulation Error',
+        description: 'Could not simulate code execution.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRunningCode(false);
+    }
+  };
+
+  const handlePreview = (mode: OutputMode) => {
+    setOutputMode(mode);
+    setOutputContent(text);
+    if (!isOutputPanelVisible) setIsOutputPanelVisible(true);
+  };
+
+
   // Keyboard shortcuts for zoom
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -455,6 +508,10 @@ export default function ProTextAIPage() {
             handleRestoreDefaultFont();
             handled = true;
             break;
+          case 'r':
+            handleRunCode();
+            handled = true;
+            break;
         }
         if (handled) {
           e.preventDefault();
@@ -466,7 +523,7 @@ export default function ProTextAIPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleZoomIn, handleZoomOut, handleRestoreDefaultFont]);
+  }, [handleZoomIn, handleZoomOut, handleRestoreDefaultFont, handleRunCode, text, syntaxLanguage]);
 
   const menuActions = {
     'file:new': handleNew,
@@ -499,6 +556,9 @@ export default function ProTextAIPage() {
     'ai:expand': handleExpand,
     'ai:generateCode': () => setIsGenerateCodeDialogOpen(true),
     'ai:generateImage': () => setIsGenerateImageDialogOpen(true),
+    'run:runCode': handleRunCode,
+    'run:previewHtml': () => handlePreview('html-preview'),
+    'run:previewMarkdown': () => handlePreview('markdown-preview'),
   };
 
   return (
@@ -511,29 +571,48 @@ export default function ProTextAIPage() {
         isExpanding={isExpanding}
         isGeneratingCode={isGeneratingCode}
         isGeneratingImage={isGeneratingImage}
+        isRunningCode={isRunningCode}
         wordWrap={wordWrap}
         showStatusBar={showStatusBar}
         syntaxLanguage={syntaxLanguage}
         onSyntaxChange={setSyntaxLanguage}
       />
-      <main className="flex-grow flex relative overflow-hidden">
-        <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelected}
-            style={{ display: 'none' }}
-            accept=".txt,.js,.html,.css,.md,text/plain"
-        />
-        <Editor
-          ref={editorRef}
-          value={text}
-          onChange={handleTextChange}
-          onSelect={updateStatusBar}
-          wordWrap={wordWrap}
-          fontSettings={fontSettings}
-          syntaxLanguage={syntaxLanguage}
-        />
-      </main>
+      <ResizablePanelGroup direction="vertical" className="flex-grow">
+        <ResizablePanel defaultSize={isOutputPanelVisible ? 70 : 100}>
+          <main className="flex-grow flex relative overflow-hidden h-full">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                style={{ display: 'none' }}
+                accept=".txt,.js,.html,.css,.md,text/plain"
+            />
+            <Editor
+              ref={editorRef}
+              value={text}
+              onChange={handleTextChange}
+              onSelect={updateStatusBar}
+              wordWrap={wordWrap}
+              fontSettings={fontSettings}
+              syntaxLanguage={syntaxLanguage}
+            />
+          </main>
+        </ResizablePanel>
+        {isOutputPanelVisible && (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={30} minSize={10} collapsible onCollapse={() => setIsOutputPanelVisible(false)}>
+              <div className="p-2 h-full">
+                <OutputPanel 
+                  mode={outputMode}
+                  onModeChange={setOutputMode}
+                  content={outputContent}
+                />
+              </div>
+            </ResizablePanel>
+          </>
+        )}
+      </ResizablePanelGroup>
       {showStatusBar && <StatusBar {...statusBarData} />}
       <AboutDialog open={isAboutDialogOpen} onOpenChange={setIsAboutDialogOpen} />
       <HelpDialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen} />
